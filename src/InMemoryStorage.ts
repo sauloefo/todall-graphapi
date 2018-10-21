@@ -1,5 +1,5 @@
 import IStorage from './IStorage';
-import Todo from './Todo';
+import Todo from 'todall';
 
 export default class InMemoryStorage implements IStorage {
   private storage : Todo[] = [];

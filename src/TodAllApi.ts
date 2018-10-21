@@ -1,4 +1,4 @@
-import Todo from './Todo';
+import Todo from 'todall';
 import IStorage from './IStorage';
 
 export default class TodAllApi {

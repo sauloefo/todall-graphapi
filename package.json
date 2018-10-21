@@ -29,6 +29,7 @@
     "express": "^4.16.4",
     "express-graphql": "^0.6.12",
     "graphql": "^14.0.2",
-    "pkginfo": "^0.4.1"
+    "pkginfo": "^0.4.1",
+    "todall": "^1.0.4"
   }
 }
