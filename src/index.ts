@@ -6,10 +6,10 @@ import express from 'express';
 import graphqlHTTP from 'express-graphql';
 import { schema, resolver } from './GraphApi';
 
-// TODO: convert const below to environment variables or arg parameters
 const apiPath = `v${version}`;
-const apiPort = 4000;
-const enableGraphiQL = true;
+const apiPort = process.env.PORT || 4000;
+const hostname = process.env.HOSTNAME || 'localhost';
+const enableGraphiQL = Boolean(process.env.ENABLE_GRAPHIQL);
 
 const app = express();
 app.use('/' + apiPath, graphqlHTTP({
@@ -18,7 +18,7 @@ app.use('/' + apiPath, graphqlHTTP({
   graphiql: enableGraphiQL
 }));
 
-const runningURL = `http://localhost:${apiPort}/${apiPath}/`;
+const runningURL = `http://${hostname}:${apiPort}/${apiPath}/`;
 
 app.listen(apiPort)
   .on('listening', () => console.log(`TodALL GraphAPI (version ${version}) running on ${runningURL}.`))
