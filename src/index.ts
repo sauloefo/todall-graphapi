@@ -6,23 +6,30 @@ import express from 'express';
 import graphqlHTTP from 'express-graphql';
 import { schema, resolver } from './GraphApi';
 
-const apiPath = `v${version}`;
+const apiPath = `/v${version}`;
 const apiPort = process.env.PORT || 4000;
 const hostname = process.env.HOSTNAME || 'localhost';
 const enableGraphiQL = Boolean(process.env.ENABLE_GRAPHIQL);
 
-const app = express();
-app.use('/' + apiPath, graphqlHTTP({
-  schema, 
-  rootValue: resolver,
-  graphiql: enableGraphiQL
-}));
+const enableCORS = function(req: any, res: any, next: any) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+};
 
-const runningURL = `http://${hostname}:${apiPort}/${apiPath}/`;
+const app = express()
+  .use(enableCORS)
+  .use(apiPath, graphqlHTTP({
+    schema, 
+    rootValue: resolver,
+    graphiql: enableGraphiQL
+  }));
+
+const entryURL = `http://${hostname}:${apiPort}${apiPath}/`;
 
 app.listen(apiPort)
-  .on('listening', () => console.log(`TodALL GraphAPI (version ${version}) running on ${runningURL}.`))
+  .on('listening', () => console.log(`TodALL GraphAPI (version ${version}) running on ${entryURL}.`))
   .on('error', error => console.error(
-    `Failure to initialize TodALL GraphAPI (version ${version}) on ${runningURL}:`
+    `Failure to initialize TodALL GraphAPI (version ${version}) on ${entryURL}:`
     , error
   ));
