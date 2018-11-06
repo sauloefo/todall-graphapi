@@ -4,7 +4,7 @@ console.log(`Initializing TodALL GrapAPI version ${version}...`);
 
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
-import { schema, resolver } from './GraphApi';
+import { schema } from './graphql-api';
 
 const apiPath = `/v${version}`;
 const apiPort = process.env.PORT || 4000;
@@ -20,8 +20,7 @@ const enableCORS = function(req: any, res: any, next: any) {
 const app = express()
   .use(enableCORS)
   .use(apiPath, graphqlHTTP({
-    schema, 
-    rootValue: resolver,
+    schema,
     graphiql: enableGraphiQL
   }));
 
