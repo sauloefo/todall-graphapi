@@ -1,4 +1,4 @@
-import IStorage from './an-interface';
+import IStorage from './istorage';
 import Todo from 'todall';
 
 export default class InMemoryStorage implements IStorage {
