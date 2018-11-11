@@ -1,5 +1,5 @@
 import Todo from 'todall';
-import IStorage from './istorage';
+import IStorage from './an-interface';
 
 export default class TodAllApi {
   constructor(private storage: IStorage) { }
