@@ -15,7 +15,7 @@ type SObject = { id: string }
 
 const storage: { [id: string]: { [id: string]: SObject } } = {};
 
-const { nodeInterface, nodeField } = nodeDefinitions(
+const { nodeInterface, nodeField, nodesField } = nodeDefinitions(
   (globalId) => {
     const {type, id} = fromGlobalId(globalId);
     return storage[type][id];
@@ -72,6 +72,7 @@ const queryType = new GraphQLObjectType({
       }
     },
     node: nodeField,
+    nodes: nodesField,
     retrieveAllTodo: {
       type: new GraphQLList(todoType),
       resolve: () => {
