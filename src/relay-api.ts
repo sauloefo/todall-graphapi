@@ -21,7 +21,7 @@ const { nodeInterface, nodeField } = nodeDefinitions(
     return storage[type][id];
   },
   (obj): GraphQLObjectType => {
-    return todoType;
+    return (obj.title)?todoType:personType;
   }
 );
 
@@ -41,6 +41,22 @@ const todoType = new GraphQLObjectType({
   })
 });
 
+class Person {
+  constructor(public id: string, public name: String) { }
+}
+
+const personTypeName = 'PersonType';
+const personType = new GraphQLObjectType({
+  name: personTypeName,
+  interfaces: [nodeInterface],
+  fields: () => ({
+    id: globalIdField(),
+    name: {
+      type: GraphQLString
+    }
+  })
+});
+
 const queryType = new GraphQLObjectType({
   name: 'Query',
   fields: {
@@ -55,13 +71,19 @@ const queryType = new GraphQLObjectType({
         return 'Hello World ' + args.name;
       }
     },
-    retrieveAll: {
+    node: nodeField,
+    retrieveAllTodo: {
       type: new GraphQLList(todoType),
       resolve: () => {
         return Object.keys(storage[todoTypeName]).map(key => storage[todoTypeName][key]);
       }
     },
-    node: nodeField
+    retrieveAllPerson: {
+      type: new GraphQLList(personType),
+      resolve: () => {
+        return Object.keys(storage[personTypeName]).map(key => storage[personTypeName][key]);
+      }
+    }
   }
 });
 
@@ -83,6 +105,23 @@ const mutationType = new GraphQLObjectType({
         const newTodo = new Todo(id, args.title);
         storage[todoTypeName][id] = newTodo;
         return newTodo;
+      }
+    },
+    savePerson: {
+      type: personType,
+      args: {
+        name: {
+          type: GraphQLString
+        }
+      },
+      resolve: (source, args) => {
+        if (!storage[personTypeName]) {
+          storage[personTypeName] = {};
+        }
+        const id = String(Object.keys(storage[personTypeName]).length);
+        const newPerson = new Person(id, args.name);
+        storage[personTypeName][id] = newPerson;
+        return newPerson;
       }
     }
   }
