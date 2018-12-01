@@ -1,6 +1,6 @@
 {
   "name": "todall-graphapi",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "GraphAPI for TodAll app",
   "main": "build/index.js",
   "scripts": {
