@@ -4,8 +4,7 @@ console.log(`Initializing TodALL GrapAPI version ${version}...`);
 
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
-// import { schema } from './graphql-api';
-import { schema } from './relay-api';
+import schema from './relay-api';
 
 const apiPath = `/v${version}`;
 const apiPort = process.env.PORT || 4000;
