@@ -11,51 +11,32 @@ import {
   fromGlobalId
 } from 'graphql-relay';
 
-type SObject = { id: string }
+import * as models from './models';
+import * as graphqlTypeSpec from './graphql-api-types';
 
+type SObject = { id: string }
 const storage: { [id: string]: { [id: string]: SObject } } = {};
 
+const retrieveByGlobalId = (globalId: string) => {
+  const {type, id} = fromGlobalId(globalId);
+  return storage[type][id];
+}
+
+const typeResolver = (obj: any): GraphQLObjectType => {
+  return (obj.title)?todoType:personType;
+}
+
 const { nodeInterface, nodeField, nodesField } = nodeDefinitions(
-  (globalId) => {
-    const {type, id} = fromGlobalId(globalId);
-    return storage[type][id];
-  },
-  (obj): GraphQLObjectType => {
-    return (obj.title)?todoType:personType;
-  }
+  retrieveByGlobalId,
+  typeResolver
 );
 
-class Todo {
-  constructor(public id: string, public title: String) { }
-}
+const typeBase = {
+  interfaces: [nodeInterface]
+};
 
-const todoTypeName = 'TodoType';
-const todoType = new GraphQLObjectType({
-  name: todoTypeName,
-  interfaces: [nodeInterface],
-  fields: () => ({
-    id: globalIdField(),
-    title: {
-      type: GraphQLString
-    }
-  })
-});
-
-class Person {
-  constructor(public id: string, public name: String) { }
-}
-
-const personTypeName = 'PersonType';
-const personType = new GraphQLObjectType({
-  name: personTypeName,
-  interfaces: [nodeInterface],
-  fields: () => ({
-    id: globalIdField(),
-    name: {
-      type: GraphQLString
-    }
-  })
-});
+const todoType = new GraphQLObjectType(Object.assign({}, typeBase, graphqlTypeSpec.todo));
+const personType = new GraphQLObjectType(Object.assign({}, typeBase, graphqlTypeSpec.person));
 
 const queryType = new GraphQLObjectType({
   name: 'Query',
@@ -88,6 +69,12 @@ const queryType = new GraphQLObjectType({
   }
 });
 
+const todoTypeName = graphqlTypeSpec.todo.name;
+const personTypeName = graphqlTypeSpec.person.name;
+
+console.log('todo', todoTypeName);
+console.log('person', personTypeName);
+
 const mutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: {
@@ -103,7 +90,7 @@ const mutationType = new GraphQLObjectType({
           storage[todoTypeName] = {};
         }
         const id = String(Object.keys(storage[todoTypeName]).length);
-        const newTodo = new Todo(id, args.title);
+        const newTodo = new models.Todo(id, args.title);
         storage[todoTypeName][id] = newTodo;
         return newTodo;
       }
@@ -120,7 +107,7 @@ const mutationType = new GraphQLObjectType({
           storage[personTypeName] = {};
         }
         const id = String(Object.keys(storage[personTypeName]).length);
-        const newPerson = new Person(id, args.name);
+        const newPerson = new models.Person(id, args.name);
         storage[personTypeName][id] = newPerson;
         return newPerson;
       }
