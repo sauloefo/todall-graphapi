@@ -1,12 +1,12 @@
 import {
   GraphQLObjectType,
   GraphQLString,
-  GraphQLList,
   GraphQLSchema
 } from 'graphql';
 
 import {
   nodeDefinitions,
+  mutationWithClientMutationId,
   globalIdField,
   fromGlobalId
 } from 'graphql-relay';
@@ -31,13 +31,6 @@ const { nodeInterface, nodeField, nodesField } = nodeDefinitions(
   typeResolver
 );
 
-const typeBase = {
-  interfaces: [nodeInterface]
-};
-
-const todoType = new GraphQLObjectType(Object.assign({}, typeBase, graphqlTypeSpec.todo));
-const personType = new GraphQLObjectType(Object.assign({}, typeBase, graphqlTypeSpec.person));
-
 const queryType = new GraphQLObjectType({
   name: 'Query',
   fields: {
@@ -53,63 +46,106 @@ const queryType = new GraphQLObjectType({
       }
     },
     node: nodeField,
-    nodes: nodesField,
-    retrieveAllTodo: {
-      type: new GraphQLList(todoType),
-      resolve: () => {
-        return Object.keys(storage[todoTypeName]).map(key => storage[todoTypeName][key]);
-      }
-    },
-    retrieveAllPerson: {
-      type: new GraphQLList(personType),
-      resolve: () => {
-        return Object.keys(storage[personTypeName]).map(key => storage[personTypeName][key]);
-      }
+    nodes: nodesField
+  }
+});
+
+const baseType = {
+  fields: {
+    id: globalIdField()
+  },
+  interfaces: [nodeInterface]
+};
+
+const inputTypeBaseFields = {
+  id: {
+    type: GraphQLString
+  }
+}
+
+const personTypeName = graphqlTypeSpec.person.name;
+const personTypeMergedFields = Object.assign(
+  {},
+  baseType.fields,
+  graphqlTypeSpec.person.fields
+);
+const personType = new GraphQLObjectType(Object.assign(
+  {},
+  baseType,
+  graphqlTypeSpec.person,
+  { fields: personTypeMergedFields }
+));
+
+const personInputTypeMergedFields = Object.assign(
+  {},
+  inputTypeBaseFields,
+  graphqlTypeSpec.person.fields
+);
+
+const savePersonMutation = mutationWithClientMutationId({
+  name: 'savePerson',
+  inputFields: personInputTypeMergedFields,
+  outputFields: {
+    person: {
+      type: personType,
+      resolve: (payload) => payload.person
     }
+  },
+  mutateAndGetPayload: ({ name }) => {
+    if (!storage[personTypeName]) {
+      storage[personTypeName] = {};
+    }
+    const id = String(Object.keys(storage[personTypeName]).length);
+    const newPerson = new models.Person(id, name);
+    storage[personTypeName][id] = newPerson;
+    return { person: newPerson };
   }
 });
 
 const todoTypeName = graphqlTypeSpec.todo.name;
-const personTypeName = graphqlTypeSpec.person.name;
+const todoTypeMergedFields = Object.assign(
+  {},
+  baseType.fields,
+  graphqlTypeSpec.todo.fields
+);
+const todoType = new GraphQLObjectType(Object.assign(
+  {},
+  baseType,
+  graphqlTypeSpec.todo,
+  { fields: todoTypeMergedFields }
+));
+const todoInputTypeMergedFields = Object.assign(
+  {},
+  inputTypeBaseFields,
+  graphqlTypeSpec.todo.fields
+);
+
+const saveTodoMutation = mutationWithClientMutationId({
+  name: 'saveTodo',
+  inputFields: todoInputTypeMergedFields,
+  outputFields: {
+    todo: {
+      type: todoType,
+      resolve: (payload) => payload.todo
+    }
+  },
+  mutateAndGetPayload: ({ title }) => {
+    if (!storage[todoTypeName]) {
+      storage[todoTypeName] = {};
+    }
+    const id = String(Object.keys(storage[todoTypeName]).length);
+    const newTodo = new models.Todo(id, title);
+    storage[todoTypeName][id] = newTodo;
+    return { todo: newTodo };
+  }
+});
 
 const mutationType = new GraphQLObjectType({
   name: 'Mutation',
-  fields: {
-    saveTodo: {
-      type: todoType,
-      args: {
-        title: {
-          type: GraphQLString
-        }
-      },
-      resolve: (source, args) => {
-        if (!storage[todoTypeName]) {
-          storage[todoTypeName] = {};
-        }
-        const id = String(Object.keys(storage[todoTypeName]).length);
-        const newTodo = new models.Todo(id, args.title);
-        storage[todoTypeName][id] = newTodo;
-        return newTodo;
-      }
-    },
-    savePerson: {
-      type: personType,
-      args: {
-        name: {
-          type: GraphQLString
-        }
-      },
-      resolve: (source, args) => {
-        if (!storage[personTypeName]) {
-          storage[personTypeName] = {};
-        }
-        const id = String(Object.keys(storage[personTypeName]).length);
-        const newPerson = new models.Person(id, args.name);
-        storage[personTypeName][id] = newPerson;
-        return newPerson;
-      }
-    }
-  }
+  fields: () => ({
+    saveTodo: saveTodoMutation,
+    savePerson: savePersonMutation
+  })
 });
 
 const schema = new GraphQLSchema({ 
